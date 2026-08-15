@@ -5,13 +5,24 @@ require('dotenv').config();
 
 // Importar configuraciones
 const connectDB = require('./src/config/database');
+const bootstrapAdmin = require('./src/config/bootstrapAdmin');
 
 const app = express();
 
-// Conectar a la base de datos (sin crashear si falla)
-connectDB().catch(err => {
-  console.log('⚠️  Servidor iniciado sin BD. Conéctate después.');
-});
+// Conectar a la base de datos y crear el admin inicial solo cuando se habilite.
+connectDB()
+  .then(async connection => {
+    if (connection) {
+      await bootstrapAdmin();
+    }
+  })
+  .catch(error => {
+    console.error('❌ Error inicializando servicios:', error.message);
+
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+  });
 
 // Middlewares básicos
 app.use(cors({
