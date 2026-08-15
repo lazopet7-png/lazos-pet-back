@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Importar configuraciones
@@ -54,13 +55,17 @@ app.get('/', (req, res) => {
 
 // Ruta de salud
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK', 
-    message: 'Servidor funcionando correctamente',
+  const databaseConnected = mongoose.connection.readyState === 1;
+
+  res.status(databaseConnected ? 200 : 503).json({
+    status: databaseConnected ? 'OK' : 'DEGRADED',
+    message: databaseConnected
+      ? 'Servidor funcionando correctamente'
+      : 'Base de datos no disponible',
     timestamp: new Date().toISOString(),
     service: 'Lazos de Vida Pets API',
     environment: process.env.NODE_ENV || 'development',
-    database: 'Conectado'
+    database: databaseConnected ? 'Conectado' : 'Desconectado'
   });
 });
 

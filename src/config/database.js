@@ -10,6 +10,9 @@ const connectDB = async () => {
     
     // Configuración optimizada para MongoDB Atlas (corregida)
     const options = {
+      // Mantener los datos de Pets aislados aunque la URI no incluya una base.
+      dbName: process.env.MONGODB_DB_NAME || 'lazos-pet',
+
       // Timeouts más largos
       serverSelectionTimeoutMS: 20000, // 20 segundos
       socketTimeoutMS: 45000,          // 45 segundos
