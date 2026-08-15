@@ -1,363 +1,175 @@
-# 🐾 LAZOS DE VIDA PETS - BACKEND
+# Lazos de Vida Pets — Backend
 
-## 📋 RESUMEN EJECUTIVO
+API REST del sistema de memoriales digitales para mascotas. Administra usuarios administrativos, clientes, memoriales, códigos QR, comentarios, configuración visual y contenido multimedia.
 
-**¡Backend 100% funcional y listo para integración frontend!**
+## Producción
 
-- ✅ **Servidor**: Corriendo en puerto 3000
-- ✅ **Base de datos**: MongoDB conectada con datos de prueba
-- ✅ **Autenticación**: JWT implementada
-- ✅ **Modelo B2B**: Admin gestiona clientes y memoriales
-- ✅ **QR automático**: Generación y acceso público funcionando
-- ✅ **Personalización**: Temas y dashboard configurables
+- API: `https://api.pets.lazosdevida.com`
+- Health check: `https://api.pets.lazosdevida.com/health`
+- Hosting: Render
+- Base de datos: MongoDB Atlas, base `lazos-pet`
+- Archivos: Cloudflare R2, bucket `lazos-pet-media`
 
----
+El endpoint `/health` devuelve HTTP 200 cuando MongoDB está conectado y HTTP 503 cuando la base de datos no está disponible.
 
-## 🔐 Configuración segura
+## Tecnologías
 
-Las credenciales administrativas y los secretos de infraestructura se configuran fuera del repositorio. Consulta `.env.example` para conocer los nombres requeridos.
+- Node.js y Express 4
+- MongoDB y Mongoose 8
+- JWT y bcrypt
+- Multer, Sharp y FFmpeg para multimedia
+- AWS SDK S3 para Cloudflare R2
+- Joi para validación
+- QRCode para generación de códigos
 
----
+## Requisitos
 
-## 📊 DATOS DE PRUEBA COMPLETOS
+- Node.js 18 o superior
+- npm
+- Proyecto de MongoDB Atlas
+- Bucket de Cloudflare R2 con credenciales de acceso
 
-### 👤 Cliente Registrado:
-```json
-{
-  "id": "6854aacddb7fae19cd4908f4",
-  "codigoCliente": "CL-001", 
-  "nombre": "María Salud Ramirez Caballero",
-  "telefono": "+54 11 1234-5678",
-  "email": "familia@email.com"
-}
-```
+## Desarrollo local
 
-### 🌹 Memorial Completo:
-```json
-{
-  "id": "6854ab0adb7fae19cd4908f9",
-  "nombre": "María Salud Ramirez Caballero",
-  "fechaNacimiento": "1934-05-15",
-  "fechaFallecimiento": "2023-12-10", 
-  "edadAlFallecer": 89,
-  "biografia": "Biografía completa de 500+ palabras...",
-  "qr": {
-    "code": "86E6AB4C2E47",
-    "url": "http://localhost:3000/memorial/86E6AB4C2E47"
-  }
-}
-```
-
-### 🎨 Dashboard Personalizado:
-```json
-{
-  "tema": "elegante",
-  "colorPrimario": "#8B4513",
-  "colorSecundario": "#F5F5DC", 
-  "colorAccento": "#D2691E",
-  "secciones": ["biografia", "galeria_fotos", "videos", "condolencias"]
-}
-```
-
----
-
-## 🚀 ENDPOINTS PRINCIPALES PROBADOS
-
-### 🔐 AUTENTICACIÓN
 ```bash
-# Login admin
-POST /api/auth/login
-Body: {"email":"ADMIN_EMAIL","password":"ADMIN_PASSWORD"}
-Response: { token, user, planLimits }
-
-# Perfil admin  
-GET /api/auth/profile
-Headers: Authorization: Bearer TOKEN
-```
-
-### 👥 GESTIÓN CLIENTES
-```bash
-# Listar clientes
-GET /api/clients
-Headers: Authorization: Bearer TOKEN
-Response: { clients[], pagination }
-
-# Crear cliente
-POST /api/clients  
-Body: {"nombre":"Nombre","apellido":"Apellido","telefono":"123","email":"email@domain.com"}
-Response: { cliente con código único CL-XXX }
-
-# Cliente específico
-GET /api/clients/:id
-GET /api/clients/code/CL-001
-```
-
-### 🌹 MEMORIALES  
-```bash
-# Crear memorial
-POST /api/profiles
-Body: {"clientId":"...", "nombre":"...", "fechaNacimiento":"...", "fechaFallecimiento":"...", "biografia":"..."}
-Response: { memorial completo + QR automático }
-
-# Memoriales por cliente
-GET /api/profiles/client/:clientId
-
-# Memorial específico
-GET /api/profiles/:id
-```
-
-### 🌐 ACCESO PÚBLICO (SIN AUTENTICACIÓN)
-```bash
-# Memorial público vía QR ⭐ 
-GET /api/memorial/86E6AB4C2E47
-Response: { memorial completo, tracking de visitas }
-
-# Dashboard público ⭐
-GET /api/dashboard/public/6854ab0adb7fae19cd4908f9  
-Response: { configuración, CSS generado, secciones }
-```
-
-### 🎨 PERSONALIZACIÓN
-```bash
-# Crear dashboard
-POST /api/dashboard/:profileId
-Body: {"tema":"elegante","colorPrimario":"#color"}
-
-# Actualizar tema
-PUT /api/dashboard/:profileId/theme
-Body: {"tema":"elegante","configuracion":{...}}
-
-# Actualizar secciones
-PUT /api/dashboard/:profileId/sections
-Body: {"secciones":[...]}
-```
-
-### 👨‍💼 PANEL ADMIN
-```bash
-# Dashboard principal
-GET /api/admin/dashboard
-Response: { estadísticas, clientes recientes, memoriales recientes }
-
-# Búsqueda global
-GET /api/admin/search?q=termino
-Response: { clientes[], memoriales[] }
-
-# Registro completo (cliente + memorial)
-POST /api/admin/register-complete
-Body: { cliente: {...}, memorial: {...} }
-```
-
----
-
-## 📱 EJEMPLO INTEGRACIÓN FRONTEND
-
-### 🔗 Memorial Público (lo que ve la gente al escanear QR):
-```javascript
-// GET /api/memorial/86E6AB4C2E47
-const memorial = await fetch('/api/memorial/86E6AB4C2E47');
-const data = await memorial.json();
-
-console.log(data.memorial.nombre);     // "María Salud Ramirez Caballero"
-console.log(data.memorial.biografia);  // Biografía completa
-console.log(data.memorial.edadAlFallecer); // 89
-console.log(data.qr.vistas);          // Contador de visitas
-```
-
-### 🎨 Dashboard con CSS automático:
-```javascript
-// GET /api/dashboard/public/6854ab0adb7fae19cd4908f9
-const config = await fetch('/api/dashboard/public/6854ab0adb7fae19cd4908f9');
-const data = await config.json();
-
-// CSS generado automáticamente
-document.head.insertAdjacentHTML('beforeend', `<style>${data.css}</style>`);
-
-// Secciones ordenadas y configuradas
-data.secciones.forEach(seccion => {
-  console.log(seccion.tipo);           // "biografia", "galeria_fotos", etc.
-  console.log(seccion.configuracion); // Grid, list, timeline, etc.
-});
-```
-
-### 🔐 Admin Dashboard:
-```javascript
-// Con token de autorización
-const headers = {
-  'Authorization': 'Bearer ' + token,
-  'Content-Type': 'application/json'
-};
-
-// Dashboard del admin
-const dashboard = await fetch('/api/admin/dashboard', { headers });
-const stats = await dashboard.json();
-
-console.log(stats.estadisticas.clientes.total);    // 1
-console.log(stats.estadisticas.memoriales.total);  // 1
-console.log(stats.actividades.clientesRecientes);  // [María Salud...]
-```
-
----
-
-## 🎯 FLUJO OPERATIVO COMPLETO
-
-### 1️⃣ **Admin se logea**
-```bash
-POST /api/auth/login → Token
-```
-
-### 2️⃣ **Registra nuevo cliente**  
-```bash
-POST /api/clients → CL-002 generado
-```
-
-### 3️⃣ **Crea memorial para cliente**
-```bash
-POST /api/profiles → Memorial + QR automático
-```
-
-### 4️⃣ **Personaliza memorial**
-```bash
-PUT /api/dashboard/:id/theme → Colores, tema
-POST /api/media/upload/:id → Fotos/videos
-```
-
-### 5️⃣ **Entrega QR físico**
-```
-QR contiene: http://localhost:3000/memorial/ABC123XYZ
-```
-
-### 6️⃣ **Público accede escaneando**
-```bash
-GET /api/memorial/ABC123XYZ → Memorial completo
-```
-
----
-
-## 🔧 CONFIGURACIÓN DE DESARROLLO
-
-### 📁 Estructura del Proyecto:
-```
-src/modules/
-├── admin/       # Panel administrativo  
-├── auth/        # Solo login admin
-├── clients/     # Gestión clientes
-├── profiles/    # Memoriales (usa clientId)
-├── media/       # Upload fotos/videos
-├── qr/          # Generación QR
-└── dashboard/   # Personalización
-```
-
-### 🌍 Variables de Entorno:
-```bash
-PORT=3000
-MONGODB_URI=
-JWT_SECRET=
-JWT_EXPIRES_IN=7d
-FRONTEND_URL=http://localhost:3000
-QR_BASE_URL=http://localhost:3000/memorial
-```
-
-### 🚀 Comandos Útiles:
-```bash
-# Iniciar servidor
+npm install
 npm run dev
-
-# Verificar estado base de datos  
-npm run check:db
-
-# Crear nuevo admin (si es necesario)
-npm run setup:admin
-
-# Limpiar base de datos
-npm run clear:db
 ```
 
----
+El servidor usa el puerto indicado por `PORT` y, si no existe, el puerto 3000.
 
-## ✅ TESTING COMPLETADO
+## Variables de entorno
 
-### 🎯 **Funcionalidades Probadas:**
-- ✅ Autenticación JWT completa
-- ✅ CRUD clientes con códigos únicos  
-- ✅ Creación memoriales con biografía
-- ✅ QR automático en creación memorial
-- ✅ Acceso público sin autenticación
-- ✅ Dashboard personalizable
-- ✅ Temas y colores funcionando
-- ✅ CSS generado automáticamente
-- ✅ Panel admin con estadísticas
-- ✅ Búsqueda y filtros
-- ✅ Tracking de visitas QR
-- ✅ Paginación y ordenamiento
+`.env.example` contiene únicamente los nombres y valores no sensibles necesarios como referencia. El archivo `.env` real no debe guardarse en Git ni copiarse en reportes.
 
-### 📊 **Estadísticas Actuales:**
+### Aplicación y base de datos
+
+| Variable | Propósito |
+| --- | --- |
+| `NODE_ENV` | Entorno de ejecución |
+| `PORT` | Puerto HTTP |
+| `MONGODB_URI` | Cadena privada de conexión a Atlas |
+| `MONGODB_DB_NAME` | Base usada por Mongoose; producción debe usar `lazos-pet` |
+| `JWT_SECRET` | Firma privada de tokens |
+| `JWT_EXPIRES_IN` | Vigencia del token |
+| `FRONTEND_URL` | Origen permitido por CORS |
+| `QR_BASE_URL` | Base pública para las URLs codificadas en los QR |
+
+### Cloudflare R2
+
+| Variable | Propósito |
+| --- | --- |
+| `R2_ACCOUNT_ID` | Cuenta de Cloudflare |
+| `R2_ACCESS_KEY_ID` | Identificador de acceso S3 |
+| `R2_SECRET_ACCESS_KEY` | Secreto de acceso S3 |
+| `R2_BUCKET_NAME` | Bucket de archivos |
+| `R2_PUBLIC_URL` | URL pública usada para servir media |
+
+### Creación inicial del administrador
+
+| Variable | Propósito |
+| --- | --- |
+| `ADMIN_BOOTSTRAP_ENABLED` | Habilita temporalmente el alta inicial |
+| `ADMIN_NAME` | Nombre del primer administrador |
+| `ADMIN_EMAIL` | Correo del primer administrador |
+| `ADMIN_PASSWORD` | Contraseña inicial |
+| `ADMIN_PLAN` | Plan asignado |
+
+El bootstrap es de un solo uso. Se habilita únicamente para crear el primer administrador y luego deben eliminarse las variables `ADMIN_*` sensibles o deshabilitarse inmediatamente. Nunca deben incluirse sus valores en commits, logs o URLs.
+
+## Base de datos
+
+La conexión define explícitamente `MONGODB_DB_NAME`; por eso producción escribe en `lazos-pet` aunque la URI de Atlas no incluya una base.
+
+Atlas también puede mostrar una base llamada `test`. Esa base fue creada durante la configuración inicial, antes de fijar el nombre explícito. Actualmente conserva las colecciones `clients`, `comentarios`, `dashboards`, `media`, `profiles`, `qrs` y `users`, todas vacías. No forma parte del flujo de producción. Su eliminación debe hacerse solo con respaldo, verificación previa y autorización explícita.
+
+## Arquitectura
+
+```text
+server.js                    # Express, CORS, health y arranque
+src/
+├── config/
+│   ├── database.js          # MongoDB y nombre de base
+│   └── bootstrapAdmin.js    # Alta inicial controlada por entorno
+├── middleware/              # Autenticación JWT
+├── models/                  # Esquemas Mongoose
+├── modules/
+│   ├── admin/               # Métricas y operaciones globales
+│   ├── auth/                # Login y perfil administrativo
+│   ├── clients/             # Clientes contratantes
+│   ├── comentarios/         # Comentarios públicos y moderación
+│   ├── dashboard/           # Apariencia del memorial
+│   ├── media/               # Fotos, videos, música y fondos
+│   ├── profiles/            # Memoriales de mascotas
+│   └── qr/                  # Generación y acceso por QR
+├── routes/index.js          # Montaje de rutas `/api`
+├── services/storage/        # Integración con R2
+└── utils/                   # Validación, QR y respuestas
 ```
-👥 Usuarios admin: 1
-🏢 Clientes: 1 (CL-001)  
-🌹 Memoriales: 1 (María Salud)
-🔗 QRs: 1 (86E6AB4C2E47)
-🎨 Dashboards: 1 (tema elegante)
+
+Cada módulo sigue el flujo `routes → controllers → services → repositories → models` cuando aplica.
+
+## Endpoints principales
+
+### Públicos
+
+| Método y ruta | Uso |
+| --- | --- |
+| `GET /health` | Estado del backend y MongoDB |
+| `GET /api/memorial/:qrCode` | Memorial abierto desde el QR |
+| `GET /api/profiles/:profileId/public` | Perfil público |
+| `GET /api/media/public/:profileId` | Media pública |
+| `GET /api/dashboard/public/:profileId` | Configuración pública |
+| `GET /api/memorial/:qrCode/comentarios` | Comentarios públicos |
+| `POST /api/memorial/:qrCode/validar-codigo` | Validación para comentar |
+
+### Autenticación
+
+| Método y ruta | Uso |
+| --- | --- |
+| `POST /api/auth/login` | Inicio de sesión |
+| `GET /api/auth/profile` | Perfil autenticado |
+| `GET /api/auth/validate-token` | Validación del JWT |
+| `POST /api/auth/logout` | Cierre de sesión |
+| `POST /api/auth/change-password` | Cambio de contraseña |
+
+### Administración
+
+- `/api/admin`: dashboard, métricas, búsqueda y operaciones globales.
+- `/api/clients`: CRUD, búsqueda, estadísticas y paginación de clientes.
+- `/api/profiles`: CRUD de memoriales y consulta por cliente.
+- `/api/qr`: generación, listado y estadísticas de QR.
+- `/api/media`: carga, edición, reordenamiento y eliminación de archivos.
+- `/api/dashboard`: temas, secciones, privacidad y configuración visual.
+- `/api/admin/profiles/:profileId/comentarios`: moderación de comentarios.
+
+Las rutas administrativas requieren `Authorization: Bearer <token>`.
+
+## Flujo del sistema
+
+1. El administrador inicia sesión y obtiene un JWT.
+2. Registra al cliente que contrata el servicio.
+3. Crea el memorial de la mascota asociado al cliente.
+4. Carga media en R2 y configura el memorial.
+5. Se genera un código QR con la URL pública.
+6. La familia escanea el QR y consulta el memorial sin autenticación.
+
+## Verificación
+
+```bash
+node --check server.js
+find src -name '*.js' -exec node --check {} \;
+npm audit --omit=dev
 ```
 
----
+Este backend no necesita un paso de build: se ejecuta directamente con Node. Actualmente no existe una configuración flat de ESLint 9, por lo que antes de exigir lint en CI debe añadirse `eslint.config.js` y un script `lint`.
 
-## 📊 ESTADO ACTUAL DEL PROYECTO
+## Seguridad operativa
 
-### ✅ **IMPLEMENTADO (Backend + Frontend):**
-
-**🔐 Autenticación & Admin:**
-* ✅ Login de administrador
-* ✅ Dashboard principal con métricas reales
-* ✅ Gestión completa de clientes (CRUD)
-* ✅ Gestión completa de memoriales (CRUD)
-* ✅ **Gestión de códigos QR** (nueva funcionalidad)
-
-**🎯 Funcionalidades Core:**
-* ✅ Generación automática de QR por memorial
-* ✅ Páginas públicas de memoriales
-* ✅ Sistema de comentarios con códigos de acceso
-* ✅ Subida y gestión de media (fotos/videos)
-* ✅ Configuración de privacidad de memoriales
-
-**📊 Estadísticas & Reportes:**
-* ✅ Métricas del dashboard conectadas
-* ✅ Actividad reciente (clientes y memoriales)
-* ✅ Estadísticas de QR y memoriales
-
-### 🚧 **PENDIENTE POR IMPLEMENTAR:**
-
-**📱 Frontend:**
-* 🔄 **Carga de contenido** - Upload de fotos/videos en la interfaz
-* 🔄 **Página de perfil de empresa** - Configuración y branding
-
-**⚙️ Backend (opcional/futuro):**
-* 🔄 Notificaciones por email
-* 🔄 Exportación de datos
-* 🔄 Analytics avanzados
-* 🔄 API para integración externa
-
-### 🎯 **PRIORIDADES INMEDIATAS:**
-1. **Carga de contenido** → Para que los admins suban fotos/videos
-2. **Perfil de empresa** → Personalización y configuración
-
----
-
-## 🎉 SIGUIENTE PASO: INTEGRACIÓN
-
-**¡El backend está 100% listo!** 
-
-El frontend dev puede:
-1. **Conectarse inmediatamente** al API
-2. **Usar los datos de María Salud** para desarrollo
-3. **Probar todos los flujos** sin crear data adicional
-4. **Enfocarse en UI/UX** sin preocuparse por backend
-
----
-
-## 📞 SOPORTE
-
-Si hay algún endpoint que no funciona o necesitas ajustes:
-1. **Revisar logs** del servidor
-2. **Verificar headers** de autorización  
-3. **Consultar este documento** para ejemplos
-4. **Probar con curl** antes de integrar
+- No mostrar ni versionar `.env`.
+- No incluir tokens o credenciales en URLs.
+- Mantener `MONGODB_DB_NAME=lazos-pet` en producción.
+- Restringir CORS al frontend esperado.
+- Rotar credenciales si aparecen en capturas o mensajes.
+- Probar escritura, lectura y borrado de un objeto de prueba después de cambiar R2.
+- Revisar el audit de dependencias sin aplicar actualizaciones forzadas o incompatibles sin pruebas.
